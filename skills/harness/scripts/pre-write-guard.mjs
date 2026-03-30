@@ -11,6 +11,7 @@
  */
 
 import { checkFileOwnership } from './lib/agent-registry.mjs';
+import { appendTrace } from './lib/trace-logger.mjs';
 import { relative } from 'path';
 
 function main() {
@@ -43,6 +44,7 @@ function main() {
   const result = checkFileOwnership(agentName, relativePath);
 
   if (!result.allowed) {
+    appendTrace({ action: 'block', agent: agentName, file: relativePath, reason: result.reason, meta: { hook: 'file-ownership' } });
     process.stdout.write(JSON.stringify({
       decision: 'block',
       reason: result.reason,

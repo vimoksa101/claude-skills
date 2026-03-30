@@ -7,6 +7,10 @@
  */
 
 import { getStatusSummary, readState } from './lib/loop-state.mjs';
+import { buildResumeBriefing } from './lib/session-resume.mjs';
+import { appendTrace } from './lib/trace-logger.mjs';
+import { resetBudget } from './lib/context-budget.mjs';
+import { resetBackpressure } from './lib/backpressure.mjs';
 import { existsSync } from 'fs';
 import { join } from 'path';
 
@@ -45,6 +49,19 @@ function main() {
       );
     }
   }
+
+  // Session resume briefing
+  const resumeBriefing = buildResumeBriefing();
+  if (resumeBriefing) {
+    messages.push(`\n${resumeBriefing}`);
+  }
+
+  // Reset per-session state
+  resetBudget();
+  resetBackpressure();
+
+  // Log session start
+  appendTrace({ action: 'session_start', meta: { loopStatus: state.status } });
 
   const specsDir = join(process.cwd(), 'docs', 'specs');
   if (!existsSync(specsDir)) {

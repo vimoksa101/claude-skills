@@ -1,0 +1,17 @@
+{
+  "agents": [
+    {
+      "agent_id": "ac9f06b2320da9e4d",
+      "agent_type": "Plan",
+      "started_at": "2026-03-30T10:30:31.050Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-03-30T10:37:44.841Z",
+      "duration_ms": 433791
+    }
+  ],
+  "total_spawned": 1,
+  "total_completed": 1,
+  "total_failed": 0,
+  "last_updated": "2026-03-30T10:37:44.943Z"
+}

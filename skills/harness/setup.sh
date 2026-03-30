@@ -19,9 +19,17 @@ cp "$SCRIPT_DIR/scripts/pre-bash-guard.mjs" "$PROJECT_DIR/scripts/claude-hooks/"
 cp "$SCRIPT_DIR/scripts/post-write-verify.mjs" "$PROJECT_DIR/scripts/claude-hooks/"
 cp "$SCRIPT_DIR/scripts/subagent-contract.mjs" "$PROJECT_DIR/scripts/claude-hooks/"
 cp "$SCRIPT_DIR/scripts/session-init.mjs" "$PROJECT_DIR/scripts/claude-hooks/"
+cp "$SCRIPT_DIR/scripts/post-context-budget.mjs" "$PROJECT_DIR/scripts/claude-hooks/"
+cp "$SCRIPT_DIR/scripts/post-backpressure.mjs" "$PROJECT_DIR/scripts/claude-hooks/"
+cp "$SCRIPT_DIR/scripts/trace-summary.mjs" "$PROJECT_DIR/scripts/claude-hooks/"
 cp "$SCRIPT_DIR/scripts/lib/agent-registry.mjs" "$PROJECT_DIR/scripts/claude-hooks/lib/"
 cp "$SCRIPT_DIR/scripts/lib/spec-parser.mjs" "$PROJECT_DIR/scripts/claude-hooks/lib/"
 cp "$SCRIPT_DIR/scripts/lib/loop-state.mjs" "$PROJECT_DIR/scripts/claude-hooks/lib/"
+cp "$SCRIPT_DIR/scripts/lib/context-budget.mjs" "$PROJECT_DIR/scripts/claude-hooks/lib/"
+cp "$SCRIPT_DIR/scripts/lib/backpressure.mjs" "$PROJECT_DIR/scripts/claude-hooks/lib/"
+cp "$SCRIPT_DIR/scripts/lib/trace-logger.mjs" "$PROJECT_DIR/scripts/claude-hooks/lib/"
+cp "$SCRIPT_DIR/scripts/lib/session-resume.mjs" "$PROJECT_DIR/scripts/claude-hooks/lib/"
+cp "$SCRIPT_DIR/scripts/lib/handoff.mjs" "$PROJECT_DIR/scripts/claude-hooks/lib/"
 
 # 2. Copy settings.json (only if not exists)
 echo "⚙️  Setting up .claude/settings.json..."
@@ -42,13 +50,18 @@ else
   echo "   ✅ Created AGENTS.md (customize for your project)"
 fi
 
-# 4. Create docs/specs directory
+# 4. Copy SPEC template and create docs/specs directory
 mkdir -p "$PROJECT_DIR/docs/specs"
+if [ ! -f "$PROJECT_DIR/docs/specs/SPEC-TEMPLATE.md" ]; then
+  cp "$SCRIPT_DIR/templates/SPEC-TEMPLATE.md" "$PROJECT_DIR/docs/specs/SPEC-TEMPLATE.md"
+  echo "   ✅ Created docs/specs/SPEC-TEMPLATE.md"
+fi
 echo "   ✅ Created docs/specs/ for SPEC files"
 
-# 5. Create harness state directory
-mkdir -p "$PROJECT_DIR/.claude/.harness-state"
-echo "   ✅ Created .claude/.harness-state/"
+# 5. Create harness state directories
+mkdir -p "$PROJECT_DIR/.claude/.harness-state/traces"
+mkdir -p "$PROJECT_DIR/.claude/.harness-state/handoffs"
+echo "   ✅ Created .claude/.harness-state/ (traces, handoffs)"
 
 # 6. Add harness state to .gitignore
 if [ -f "$PROJECT_DIR/.gitignore" ]; then
@@ -70,7 +83,9 @@ echo "  2. Edit AGENTS.md"
 echo "     → Define your team's agent roles and file ownership"
 echo "  3. Edit scripts/claude-hooks/post-write-verify.mjs"
 echo "     → Customize quality rules for your codebase"
-echo "  4. Create SPEC files in docs/specs/"
+echo "  4. Create SPEC files in docs/specs/ (template provided)"
 echo "     → Include '## Acceptance Criteria' sections with checklists"
+echo "  5. View traces: node scripts/claude-hooks/trace-summary.mjs"
+echo "     → Analyze agent action history and failure patterns"
 echo ""
 echo "The harness will activate automatically on next Claude Code session."

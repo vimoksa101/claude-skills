@@ -12,6 +12,7 @@
  */
 
 import { extname } from 'path';
+import { appendTrace } from './lib/trace-logger.mjs';
 
 const CODE_EXTENSIONS = ['.ts', '.tsx', '.js', '.jsx'];
 
@@ -72,6 +73,7 @@ function main() {
   }
 
   if (warnings.length > 0) {
+    appendTrace({ action: 'warning', agent: process.env.CLAUDE_AGENT_NAME || 'main', file: filePath, reason: warnings.join('; '), meta: { hook: 'quality-guard' } });
     process.stdout.write(JSON.stringify({
       decision: 'allow',
       message: `Quality warnings (${warnings.length}):\n${warnings.join('\n')}`,

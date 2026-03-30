@@ -13,6 +13,9 @@
 import { isGenerator, normalizeAgentName } from './lib/agent-registry.mjs';
 import { buildSprintContract } from './lib/spec-parser.mjs';
 import { readState, onEvaluatorStart, getStatusSummary } from './lib/loop-state.mjs';
+import { appendTrace } from './lib/trace-logger.mjs';
+import { buildHandoffContext } from './lib/handoff.mjs';
+import { saveSessionState } from './lib/session-resume.mjs';
 
 function isDesignerReview(agentName) {
   const n = normalizeAgentName(agentName);
@@ -33,9 +36,17 @@ function main() {
 
   // --- Generator agent start ---
   if (isGenerator(agentName)) {
+    appendTrace({ action: 'agent_start', agent: agentName, meta: { role: 'generator', iteration: state.iteration } });
+
     const contract = buildSprintContract();
     if (contract) {
       messages.push(contract);
+    }
+
+    // Inject previous handoff context
+    const handoffCtx = buildHandoffContext();
+    if (handoffCtx) {
+      messages.push(`\n${handoffCtx}`);
     }
 
     // If re-running after FAIL → inject failure feedback
@@ -52,17 +63,31 @@ function main() {
 
     messages.push(
       `\n---\n` +
-      `On completion, verify:\n` +
+      `On completion you MUST:\n` +
       `1. Build passes (no type errors)\n` +
       `2. Tests pass\n` +
       `3. All Sprint Contract AC items met\n` +
+      `4. **Write a handoff memo** — list modified files, key decisions, warnings, and remaining TODOs\n` +
       `Both QA + Designer Review must PASS before commit is allowed.`
     );
+
+    // Save session state for resume
+    saveSessionState({
+      lastAgent: agentName,
+      fullFailHistory: state.failReasons || [],
+    });
   }
 
   // --- Stage 1: QA agent start ---
   if (isQA(agentName)) {
+    appendTrace({ action: 'agent_start', agent: agentName, meta: { role: 'qa', iteration: state.iteration } });
     onEvaluatorStart(agentName, 'qa');
+
+    // Inject handoff context from Generator
+    const handoffCtx = buildHandoffContext();
+    if (handoffCtx) {
+      messages.push(`\n${handoffCtx}\n`);
+    }
 
     messages.push(
       `## [Stage 1] QA Functional Verification\n\n` +
@@ -101,7 +126,14 @@ function main() {
 
   // --- Stage 2: Designer Review agent start ---
   if (isDesignerReview(agentName)) {
+    appendTrace({ action: 'agent_start', agent: agentName, meta: { role: 'designer-review', iteration: state.iteration } });
     onEvaluatorStart(agentName, 'designReview');
+
+    // Inject handoff context
+    const handoffCtx = buildHandoffContext();
+    if (handoffCtx) {
+      messages.push(`\n${handoffCtx}\n`);
+    }
 
     messages.push(
       `## [Stage 2] Designer Review — UX Quality Evaluation\n\n` +

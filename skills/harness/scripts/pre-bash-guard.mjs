@@ -11,6 +11,7 @@
  */
 
 import { canCommit } from './lib/loop-state.mjs';
+import { appendTrace } from './lib/trace-logger.mjs';
 
 const DANGEROUS_PATTERNS = [
   { pattern: /rm\s+(-rf|-fr)\s+[\/~]/, reason: 'Blocked: rm -rf on root/home directory' },
@@ -35,6 +36,7 @@ function main() {
   // 1. Dangerous command check
   for (const { pattern, reason } of DANGEROUS_PATTERNS) {
     if (pattern.test(command)) {
+      appendTrace({ action: 'block', agent: process.env.CLAUDE_AGENT_NAME || 'main', reason, meta: { hook: 'bash-guard', command: command.slice(0, 80) } });
       process.stdout.write(JSON.stringify({
         decision: 'block',
         reason: `${reason}\nCommand: ${command}`,
@@ -47,6 +49,7 @@ function main() {
   if (/git\s+commit\b/.test(command)) {
     const { canCommit: allowed, reason } = canCommit();
     if (!allowed) {
+      appendTrace({ action: 'block', agent: process.env.CLAUDE_AGENT_NAME || 'main', reason, meta: { hook: 'commit-gate' } });
       process.stdout.write(JSON.stringify({
         decision: 'block',
         reason,

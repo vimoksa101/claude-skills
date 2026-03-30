@@ -7,7 +7,8 @@ Reusable Claude Code skills & hooks for any project.
 | Skill | Description | Type |
 |-------|------------|------|
 | [ui-test-lite](skills/ui-test-lite/) | Token-efficient UI/UX testing — accessibility tree + boundingBox instead of screenshots (90% token reduction) | Skill (SKILL.md) |
-| [harness](skills/harness/) | Anthropic Harness Pattern — 2-stage evaluator loop, commit gate, file ownership, quality guards | Hooks + Skill |
+| [harness](skills/harness/) | Anthropic Harness Pattern — evaluator loop, commit gate, file ownership, context budget, backpressure, tracing, session resume, handoff memos | Hooks |
+| [claudemd-guide](skills/claudemd-guide/) | Best practices for writing effective CLAUDE.md files | Skill (SKILL.md) |
 
 ## Quick Install
 
@@ -20,19 +21,19 @@ curl -sL https://raw.githubusercontent.com/vimoksa101/claude-skills/main/skills/
   -o ~/.claude/skills/ui-test-lite/SKILL.md
 ```
 
+### claudemd-guide (Skill only)
+
+```bash
+mkdir -p ~/.claude/skills/claudemd-guide
+curl -sL https://raw.githubusercontent.com/vimoksa101/claude-skills/main/skills/claudemd-guide/SKILL.md \
+  -o ~/.claude/skills/claudemd-guide/SKILL.md
+```
+
 ### harness (Hooks + Scripts)
 
 ```bash
-# Run the setup script in your project root
-curl -sL https://raw.githubusercontent.com/vimoksa101/claude-skills/main/skills/harness/setup.sh | bash
-```
-
-Or manually:
-
-```bash
 git clone https://github.com/vimoksa101/claude-skills.git /tmp/claude-skills
-cd /tmp/claude-skills
-bash skills/harness/setup.sh /path/to/your/project
+bash /tmp/claude-skills/skills/harness/setup.sh /path/to/your/project
 ```
 
 ## What is a "Skill"?

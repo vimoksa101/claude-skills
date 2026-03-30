@@ -32,6 +32,26 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "Read|Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/claude-hooks/post-context-budget.mjs",
+            "timeout": 3
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/claude-hooks/post-backpressure.mjs",
+            "timeout": 3
+          }
+        ]
       }
     ],
     "SubagentStart": [

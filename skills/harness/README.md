@@ -4,12 +4,25 @@ A complete implementation of the [Anthropic Harness Pattern](https://www.anthrop
 
 ## What it does
 
+### Core (Evaluator Loop)
 - **2-Stage Evaluator Loop**: Generator builds → QA verifies function → Designer Review verifies UX → both PASS to commit
 - **Commit Gate**: Blocks `git commit` until both QA and Designer Review pass
 - **File Ownership**: Enforces AGENTS.md ownership rules — Evaluators can't modify code
 - **Quality Guards**: Warns on hardcoded colors, font sizes, `any` types, console.log residue
 - **Sprint Contract**: Auto-extracts Acceptance Criteria from SPEC files and injects to Generators
-- **Session Init**: Reminds project rules and shows loop status on every session start
+
+### Observability
+- **Trace Logger**: JSONL append-only trace of every agent action, block, warning, and verdict
+- **Trace Summary CLI**: `node scripts/claude-hooks/trace-summary.mjs` — timeline, stats, failure pattern analysis
+
+### Context Management
+- **Context Budget Guard**: Warns when 13+ files modified (split needed) or large files read without scoping
+- **Backpressure**: Detects same file edited 3+ times or same error repeated 2+ times — suggests strategy change
+
+### Session Continuity
+- **Session Resume**: Saves work state on generator completion, injects resume briefing on next session start
+- **Handoff Memos**: Generators must write structured handoff (modified files, decisions, warnings, TODOs) — injected to next agent
+- **Spec Template**: Standard SPEC format with Acceptance Criteria compatible with auto-extraction
 
 ## Architecture
 
@@ -87,8 +100,10 @@ const MAX_ITERATIONS = 15; // Change this
 | PreToolUse | `pre-write-guard.mjs` | Write/Edit | Blocks unauthorized file modifications |
 | PreToolUse | `pre-bash-guard.mjs` | Bash | Blocks dangerous commands + commit gate |
 | PostToolUse | `post-write-verify.mjs` | Write/Edit | Quality warnings (non-blocking) |
-| SubagentStart | `subagent-contract.mjs` | Any subagent | Sprint contract + loop management |
-| SessionStart | `session-init.mjs` | Session start | Rules reminder + loop status |
+| PostToolUse | `post-context-budget.mjs` | Read/Write/Edit | Context overflow warnings |
+| PostToolUse | `post-backpressure.mjs` | Write/Edit/Bash | Repetitive action warnings |
+| SubagentStart | `subagent-contract.mjs` | Any subagent | Sprint contract + loop + handoff management |
+| SessionStart | `session-init.mjs` | Session start | Rules + resume briefing + state reset |
 
 ## State Management
 
@@ -111,6 +126,29 @@ Loop state is stored at `.claude/.harness-state/qa-loop.json`:
 
 Reset the loop: delete `.claude/.harness-state/qa-loop.json` or run the reset function.
 
+### Traces
+
+Daily JSONL files at `.claude/.harness-state/traces/YYYY-MM-DD.jsonl`:
+
+```bash
+# View today's trace timeline + stats
+node scripts/claude-hooks/trace-summary.mjs
+
+# View specific date
+node scripts/claude-hooks/trace-summary.mjs 2026-03-29
+
+# List available dates
+node scripts/claude-hooks/trace-summary.mjs --list
+```
+
+### Session Resume
+
+Saved at `.claude/.harness-state/session-resume.json`. Auto-loaded on session start to brief the agent on previous work.
+
+### Handoffs
+
+Individual handoff memos at `.claude/.harness-state/handoffs/`. Latest handoff is injected to the next agent automatically.
+
 ## SPEC Files
 
 The harness auto-extracts Acceptance Criteria from SPEC files in `docs/specs/`:
@@ -123,3 +161,5 @@ The harness auto-extracts Acceptance Criteria from SPEC files in `docs/specs/`:
 ```
 
 These are injected into Generator subagents as a "Sprint Contract" checklist.
+
+A `SPEC-TEMPLATE.md` is provided in `templates/` and copied to `docs/specs/` during setup.
